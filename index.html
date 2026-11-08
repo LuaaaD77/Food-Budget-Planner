@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#26734d">
+<meta name="description" content="Plan weekly dishes, ingredients, shopping and food budgets.">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Food Budget Planner</title>
+<style>
+:root{--bg:#f6f7f4;--card:#fff;--ink:#202923;--muted:#748078;--green:#26734d;--pale:#e8f2eb;--line:#e7ebe7;--red:#b7473e;--amber:#9a6818}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px system-ui,-apple-system,Segoe UI,sans-serif}
+header{padding:24px 18px 18px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:3}
+.wrap{max-width:760px;margin:auto}h1{font-size:23px;margin:0 0 4px;letter-spacing:-.5px}.sub{color:var(--muted);font-size:13px}
+nav{display:flex;gap:8px;overflow:auto;padding:12px 14px;background:#fff;position:sticky;top:86px;z-index:2;border-bottom:1px solid var(--line)}
+nav button{white-space:nowrap;border:0;border-radius:20px;padding:9px 14px;background:#f0f2ef;color:#465149;font-weight:650}
+nav button.active{background:var(--green);color:#fff}
+main{max-width:760px;margin:auto;padding:16px 14px 90px}.panel{display:none}.panel.active{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:17px;padding:16px;margin-bottom:13px;box-shadow:0 2px 8px #14251a08}
+h2{font-size:17px;margin:0 0 13px}h3{font-size:14px;margin:0 0 8px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat{background:var(--pale);border-radius:13px;padding:13px}.stat small{color:var(--muted);display:block}.stat strong{font-size:21px;display:block;margin-top:4px}
+label{font-size:12px;color:var(--muted);font-weight:650;display:block;margin:0 0 5px}
+input,select,textarea{width:100%;padding:11px 12px;border:1px solid #dce3dc;border-radius:10px;background:#fff;color:var(--ink);font:inherit;min-width:0}
+textarea{min-height:65px;resize:vertical}.field{margin-bottom:11px}
+.row{display:flex;gap:9px;align-items:end}.row>*{flex:1}.btn{border:0;border-radius:11px;padding:11px 14px;background:var(--green);color:#fff;font-weight:700;font:inherit}.btn.secondary{background:#edf2ee;color:var(--green)}.btn.danger{background:#faecea;color:var(--red)}.btn.small{padding:8px 10px;font-size:13px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:9px 5px;border-bottom:1px solid var(--line);vertical-align:middle}th{color:var(--muted);font-size:11px;text-transform:uppercase}td:last-child,th:last-child{text-align:right}
+.item{padding:11px 0;border-bottom:1px solid var(--line)}.item:last-child{border:0}.itemtop{display:flex;justify-content:space-between;gap:10px;align-items:center}.muted{color:var(--muted);font-size:12px}.pill{display:inline-block;padding:4px 8px;border-radius:20px;background:#eef3ef;color:var(--green);font-size:11px;font-weight:700}
+.check{width:18px;height:18px;accent-color:var(--green)}.empty{text-align:center;color:var(--muted);padding:22px 8px}
+footer{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom));text-align:center;color:var(--muted);font-size:11px}
+@media(min-width:600px){main{padding-top:22px}.grid.four{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+<header><div class="wrap"><h1>🍲 Food Budget Planner</h1><div class="sub">Plan your dishes. Track every peso. Reuse it every week.</div></div></header>
+<nav>
+<button class="active" data-tab="dashboard">Overview</button><button data-tab="plan">Weekly plan</button><button data-tab="ingredients">Ingredients</button><button data-tab="supplies">Non-Food Supplies</button><button data-tab="shopping">Shopping</button><button data-tab="history">Past weeks</button><button data-tab="report">Final report</button>
+</nav>
+<main>
+<section id="dashboard" class="panel active">
+ <div class="card"><div class="row"><div class="field" style="flex:1"><label>WEEK / PROJECT NAME</label><input id="weekName" placeholder="e.g. Week 1 – Farm Cooking"></div><div class="field" style="flex:1"><label>DATE</label><input id="weekDate" type="date"></div></div>
+ <div class="field"><label>TOTAL AVAILABLE BUDGET (₱)</label><input id="budget" type="number" min="0" step=".01" placeholder="Enter your budget"></div>
+ <button class="btn" id="saveWeek">Save week details</button>
+ </div>
+ <div class="grid">
+  <div class="stat"><small>Available budget</small><strong id="sBudget">₱0.00</strong></div>
+  <div class="stat"><small>Actual spent</small><strong id="sSpent">₱0.00</strong></div>
+  <div class="stat"><small>Items purchased</small><strong id="sBought">0 / 0</strong></div>
+  <div class="stat"><small>Money remaining</small><strong id="sRemain">₱0.00</strong></div>
+ </div>
+ <div class="card" style="margin-top:13px"><h2>Budget use</h2><div style="height:12px;background:#edf0ed;border-radius:20px;overflow:hidden"><div id="progress" style="height:100%;width:0;background:var(--green);border-radius:20px"></div></div><p class="muted" id="budgetNote">Add your budget and expenses to begin.</p></div>
+ <div class="card"><h2>This week's dishes</h2><div id="dishSummary" class="empty">No dishes added yet.</div></div>
+ <div class="actions"><button class="btn secondary" id="newWeek">＋ Start a new week</button><button class="btn secondary" id="saveAllWeeks">Save all weeks</button><button class="btn secondary" id="chooseFolder">Choose backup folder</button><button class="btn secondary" id="importBtn">Import backup</button><input id="importFile" type="file" accept="application/json" hidden></div>
+</section>
+<section id="plan" class="panel">
+ <div class="card"><h2>Add a dish</h2><div class="field"><label>DISH NAME</label><input id="dishName" placeholder="e.g. Chicken adobo"></div><div class="field"><label>PERSON RESPONSIBLE (OPTIONAL)</label><input id="dishPerson" placeholder="Name"></div><button class="btn" id="addDish">Add dish</button></div>
+ <div class="card"><h2>Menu list</h2><div id="dishList" class="empty">No dishes yet.</div></div>
+</section>
+<section id="ingredients" class="panel">
+ <div class="card"><h2>Add an ingredient</h2><div class="field"><label>WHICH DISH?</label><select id="ingredientDish"></select></div><div class="field"><label>INGREDIENT NAME</label><input id="ingredientName" placeholder="e.g. Chicken"></div><div class="row"><div class="field"><label>QUANTITY</label><input id="ingredientQty" type="number" min="0" step="any" placeholder="Amount"></div><div class="field"><label>UNIT</label><select id="ingredientUnit"><option value="kg">kg</option><option value="ml">ml</option><option value="other">Other</option></select></div><div class="field"><label>PRICE PAID (₱)</label><input id="ingredientActual" type="number" min="0" step=".01" placeholder="Enter price paid"></div></div><div class="field" id="ingredientOtherWrap" hidden><label>OTHER UNIT (e.g. pcs, pack, bottle)</label><input id="ingredientOtherUnit" placeholder="Enter unit"></div><div class="row"><div class="field"><label>OTHER NOTE</label><input id="ingredientNote" placeholder="Optional"></div></div><button class="btn" id="addIngredient">Add ingredient</button></div>
+ <div class="card"><h2>Ingredient costs</h2><div id="ingredientList" class="empty">Add dishes first, then list their ingredients.</div></div>
+</section>
+<section id="supplies" class="panel">
+ <div class="card"><h2>Add non-food supply</h2><p class="muted">Record serving, cleaning, and disposable items separately from food ingredients.</p><div class="field"><label>SUPPLY NAME</label><input id="supplyName" placeholder="e.g. Paper plates, plastic utensils, dishwashing soap"></div><div class="row"><div class="field"><label>QUANTITY</label><input id="supplyQty" placeholder="e.g. 1 pack, 2 bottles"></div><div class="field"><label>PRICE PAID (₱)</label><input id="supplyActual" type="number" min="0" step=".01" placeholder="Enter price paid"></div></div><div class="field"><label>OTHER NOTE</label><input id="supplyNote" placeholder="Optional"></div><button class="btn" id="addSupply">Add supply</button></div>
+ <div class="card"><h2>Non-food supplies list</h2><div id="supplyList" class="empty">No non-food supplies added yet.</div></div>
+</section>
+<section id="shopping" class="panel">
+ <div class="card"><h2>Shopping checklist</h2><p class="muted">Add items as you buy them and enter the price you actually paid. You can also leave the price blank until you know it.</p><div id="shoppingList" class="empty">Your shopping list will appear here.</div></div>
+ <div class="card"><h2>Expense summary</h2><div id="expenseSummary"></div></div>
+</section>
+<section id="history" class="panel">
+ <div class="card"><h2>Previous weeks</h2><p class="muted">Your records stay on this device/browser. Use Save all weeks to create one backup file containing your current week and every saved week.</p><div id="historyList" class="empty">No saved weeks yet.</div></div>
+</section>
+<section id="report" class="panel">
+ <div class="card"><h2>Finished budget report</h2><p class="muted">Generate a clean report using your current week's menu, ingredient list, and budget figures. You can copy it into your school report or document.</p>
+ <button class="btn" id="generateReport">Generate finished report</button>
+ <div class="field" style="margin-top:13px"><label>REPORT PREVIEW</label><textarea id="reportText" style="min-height:360px" placeholder="Your finished report will appear here..." readonly></textarea></div>
+ <div class="actions"><button class="btn" id="copyReport">Copy report</button><button class="btn secondary" id="selectReport">Select all text</button></div>
+ <p class="muted" id="copyStatus" aria-live="polite"></p>
+ </div>
+</section>
+</main>
+<footer>Saved on this device • Save all weeks regularly to keep a backup</footer>
+<script>
+const KEY='foodBudgetPlanner_v1';
+let store=JSON.parse(localStorage.getItem(KEY)||'{"weeks":[],"current":null}');
+let current=store.current||fresh();
+function migrateQty(x){if(!x)return x;if(x.qtyAmount!==undefined)return x;const old=String(x.qty||'').trim();const m=old.match(/^([0-9]+(?:\.[0-9]+)?)\s*(kg|ml)\s*$/i);if(m){x.qtyAmount=m[1];x.qtyUnit=m[2].toLowerCase();x.qtyOther='';}else if(old){const n=old.match(/^([0-9]+(?:\.[0-9]+)?)\s*(.*)$/);x.qtyAmount=n?n[1]:'';x.qtyUnit='other';x.qtyOther=n&&n[2]?n[2]:old;}else{x.qtyAmount='';x.qtyUnit='kg';x.qtyOther='';}return x;}
+function formatQty(x){if(x.qtyAmount!==undefined){if(!x.qtyAmount)return '';return x.qtyAmount+' '+(x.qtyUnit==='other'?(x.qtyOther||'other'):x.qtyUnit);}return x.qty||'';}
+function removeOldEstimates(week){if(!week)return week;(week.ingredients||[]).forEach(x=>{delete x.estimate;migrateQty(x);});(week.supplies||[]).forEach(x=>{if(x.qty===undefined)x.qty='';});if(!Array.isArray(week.supplies))week.supplies=[];return week;}
+store.weeks=(store.weeks||[]).map(removeOldEstimates);current=removeOldEstimates(current);store.current=current;localStorage.setItem(KEY,JSON.stringify(store));
+function fresh(){return {id:Date.now(),name:'',date:new Date().toISOString().slice(0,10),budget:0,dishes:[],ingredients:[],supplies:[]}}
+function persist(){store.current=current;localStorage.setItem(KEY,JSON.stringify(store));render()}
+function money(n){return '₱'+(Number(n)||0).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2})}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function totals(){let food=current.ingredients.reduce((a,x)=>a+Number(x.actual||0),0),nonFood=(current.supplies||[]).reduce((a,x)=>a+Number(x.actual||0),0),bought=[...current.ingredients,...(current.supplies||[])].filter(x=>x.bought).length,count=current.ingredients.length+(current.supplies||[]).length;return {food,nonFood,actual:food+nonFood,remain:Number(current.budget||0)-food-nonFood,bought,count}}
+function render(){
+ document.getElementById('weekName').value=current.name||'';document.getElementById('weekDate').value=current.date||'';document.getElementById('budget').value=current.budget||'';
+ let t=totals();document.getElementById('sBudget').textContent=money(current.budget);document.getElementById('sSpent').textContent=money(t.actual);document.getElementById('sBought').textContent=t.bought+' / '+t.count;document.getElementById('sRemain').textContent=money(t.remain);
+ let pct=current.budget>0?Math.min(100,t.actual/current.budget*100):0;document.getElementById('progress').style.width=pct+'%';document.getElementById('budgetNote').textContent=current.budget?`${pct.toFixed(0)}% of your budget used${t.remain<0?' — you are over budget!':'.'}`:'Add your budget and expenses to begin.';
+ document.getElementById('dishSummary').innerHTML=current.dishes.length?current.dishes.map(d=>`<div class="item"><b>${esc(d.name)}</b><div class="muted">${esc(d.person||'No person assigned')} · ${current.ingredients.filter(x=>x.dish===d.id).length} ingredients</div></div>`).join(''):'No dishes added yet.';
+ document.getElementById('dishList').innerHTML=current.dishes.length?current.dishes.map(d=>`<div class="item"><div class="itemtop"><div><b>${esc(d.name)}</b><div class="muted">${esc(d.person||'No person assigned')}</div></div><div class="actions"><button class="btn secondary small" onclick="editDish('${d.id}')">Edit</button><button class="btn danger small" onclick="removeDish('${d.id}')">Remove</button></div></div></div>`).join(''):'No dishes yet.';
+ let sel=document.getElementById('ingredientDish');let old=sel.value;sel.innerHTML=current.dishes.map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('');if(current.dishes.some(d=>d.id===old))sel.value=old;
+ document.getElementById('ingredientList').innerHTML=current.ingredients.length?current.ingredients.map(x=>`<div class="item"><div class="itemtop"><div><b>${esc(x.name)}</b><div class="muted">${esc(current.dishes.find(d=>d.id===x.dish)?.name||'Dish removed')} · ${esc(formatQty(x)||'No quantity')}</div></div><div class="actions"><button class="btn secondary small" onclick="editIngredient('${x.id}')">Edit</button><button class="btn danger small" onclick="removeIngredient('${x.id}')">Remove</button></div></div><div class="row" style="margin-top:8px"><div><label>QUANTITY (${esc(x.qtyUnit==='other'?(x.qtyOther||'other'):(x.qtyUnit||'kg'))})</label><input type="number" min="0" step="any" placeholder="Enter quantity" value="${x.qtyAmount??''}" onchange="changeIngredientQuantity('${x.id}',this.value)" aria-label="Quantity for ${esc(x.name)}"></div><div><label>PRICE PAID (₱)</label><input type="number" min="0" step=".01" placeholder="Enter actual price" value="${x.actual??''}" onchange="changePrice('${x.id}','actual',this.value)"></div></div><div class="muted" style="margin-top:5px">${x.bought?'Purchased':'Not marked purchased'}</div><div class="muted">${esc(x.note||'')}</div></div>`).join(''):'Add dishes first, then list their ingredients.';
+ document.getElementById('supplyList').innerHTML=(current.supplies||[]).length?current.supplies.map(x=>`<div class="item"><div class="itemtop"><div><b>${esc(x.name)}</b><div class="muted">${esc(x.qty||'No quantity')} · Non-food supply</div></div><div class="actions"><button class="btn secondary small" onclick="editSupply('${x.id}')">Edit</button><button class="btn danger small" onclick="removeSupply('${x.id}')">Remove</button></div></div><div class="row" style="margin-top:8px"><div><label>PRICE PAID (₱)</label><input type="number" min="0" step=".01" placeholder="Enter actual price" value="${x.actual??''}" onchange="changeSupplyPrice('${x.id}',this.value)"></div><div class="muted" style="align-self:center">${x.bought?'Purchased':'Not marked purchased'}</div></div><div class="muted">${esc(x.note||'')}</div></div>`).join(''):'No non-food supplies added yet.';
+ const allItems=[...current.ingredients.map(x=>({...x,kind:'Food ingredient',detail:current.dishes.find(d=>d.id===x.dish)?.name||''})),...(current.supplies||[]).map(x=>({...x,kind:'Non-food supply',detail:'Non-food supply'}))];
+ document.getElementById('shoppingList').innerHTML=allItems.length?allItems.map(x=>`<div class="item itemtop"><div style="display:flex;gap:10px;align-items:center"><input class="check" type="checkbox" ${x.bought?'checked':''} onchange="${x.kind==='Food ingredient'?'toggleBought':'toggleSupplyBought'}('${x.id}',this.checked)"><div><b style="${x.bought?'text-decoration:line-through;color:#89938b':''}">${esc(x.name)}</b><div class="muted">${esc(formatQty(x)||'')} · ${x.kind}${x.detail&&x.detail!=='Non-food supply'?' · '+esc(x.detail):''}</div></div></div><span class="pill">${x.actual!==''&&x.actual!==null&&x.actual!==undefined?money(x.actual):'No price yet'}</span></div>`).join(''):'Your shopping list will appear here.';
+ document.getElementById('expenseSummary').innerHTML=`<div class="itemtop"><span>Total actual spending</span><b>${money(t.actual)}</b></div><div class="itemtop"><span>Food ingredients</span><b>${money(t.food)}</b></div><div class="itemtop"><span>Non-food supplies</span><b>${money(t.nonFood)}</b></div><div class="itemtop"><span>Items purchased</span><b>${t.bought} of ${t.count}</b></div><div class="itemtop"><span>Remaining budget</span><b style="color:${t.remain<0?'var(--red)':'var(--green)'}">${money(t.remain)}</b></div>`;
+ document.getElementById('historyList').innerHTML=store.weeks.length?store.weeks.slice().reverse().map(w=>`<div class="item"><div class="itemtop"><div><b>${esc(w.name||'Untitled week')}</b><div class="muted">${esc(w.date||'')} · ${w.dishes.length} dishes</div><div class="muted">Budget ${money(w.budget)} · Spent ${money(w.ingredients.reduce((a,x)=>a+Number(x.actual||0),0)+(w.supplies||[]).reduce((a,x)=>a+Number(x.actual||0),0))}</div></div><div style="display:flex;flex-direction:column;gap:5px"><button class="btn secondary small" onclick="loadWeek('${w.id}')">Open</button><button class="btn danger small" onclick="deleteWeek('${w.id}')">Delete</button></div></div></div>`).join(''):'No saved weeks yet.';
+}
+function removeDish(id){if(!confirm('Remove this dish and its ingredients?'))return;current.dishes=current.dishes.filter(d=>d.id!==id);current.ingredients=current.ingredients.filter(x=>x.dish!==id);persist()}
+function editDish(id){const d=current.dishes.find(x=>x.id===id);if(!d)return;const name=prompt('Edit dish name:',d.name);if(name===null)return;if(!name.trim())return alert('Dish name cannot be empty.');const person=prompt('Edit person responsible (leave blank if none):',d.person||'');if(person===null)return;d.name=name.trim();d.person=person.trim();persist()}
+function editIngredient(id){const x=current.ingredients.find(v=>v.id===id);if(!x)return;migrateQty(x);const name=prompt('Edit ingredient name:',x.name);if(name===null)return;if(!name.trim())return alert('Ingredient name cannot be empty.');const dishNames=current.dishes.map((d,i)=>`${i+1}. ${d.name}`).join('\n');const currentIndex=current.dishes.findIndex(d=>d.id===x.dish);const choice=prompt('Choose dish by number (leave unchanged by entering current number):\n'+dishNames,String(currentIndex+1));if(choice===null)return;const di=Number(choice)-1;if(!Number.isInteger(di)||!current.dishes[di])return alert('Invalid dish number.');const amount=prompt('Edit quantity amount:',x.qtyAmount||'');if(amount===null)return;if(amount!==''&&(!Number.isFinite(Number(amount))||Number(amount)<0))return alert('Enter a valid quantity.');const unit=prompt('Unit: enter kg, ml, or other:',x.qtyUnit||'kg');if(unit===null)return;const u=unit.toLowerCase().trim();if(!['kg','ml','other'].includes(u))return alert('Unit must be kg, ml, or other.');let other='';if(u==='other'){other=prompt('Enter the unit (e.g. pcs, pack, bottle):',x.qtyOther||'');if(other===null)return;}const note=prompt('Edit note:',x.note||'');if(note===null)return;x.name=name.trim();x.dish=current.dishes[di].id;x.qtyAmount=amount;x.qtyUnit=u;x.qtyOther=other.trim();x.qty='';x.note=note.trim();persist()}
+function editSupply(id){const x=(current.supplies||[]).find(v=>v.id===id);if(!x)return;const name=prompt('Edit supply name:',x.name);if(name===null)return;if(!name.trim())return alert('Supply name cannot be empty.');const qty=prompt('Edit quantity (e.g. 2 packs, 1 bottle):',x.qty||'');if(qty===null)return;const note=prompt('Edit note:',x.note||'');if(note===null)return;x.name=name.trim();x.qty=qty.trim();x.note=note.trim();persist()}
+function removeIngredient(id){current.ingredients=current.ingredients.filter(x=>x.id!==id);persist()}
+function removeSupply(id){current.supplies=(current.supplies||[]).filter(x=>x.id!==id);persist()}
+function changeSupplyPrice(id,v){let x=(current.supplies||[]).find(x=>x.id===id);if(x){x.actual=v===''?'':Math.max(0,Number(v));if(v!=='')x.bought=true;persist()}}
+function toggleSupplyBought(id,v){let x=(current.supplies||[]).find(x=>x.id===id);if(x){x.bought=v;persist()}}
+function changeIngredientQuantity(id,v){let x=current.ingredients.find(x=>x.id===id);if(!x)return;if(v!==''&&(!Number.isFinite(Number(v))||Number(v)<0)){alert('Enter a valid quantity (zero or greater).');render();return;}migrateQty(x);x.qtyAmount=v; x.qty='';persist()}
+function changePrice(id,k,v){let x=current.ingredients.find(x=>x.id===id);if(x){x[k]=v===''?'':Math.max(0,Number(v));if(k==='actual'&&v!=='')x.bought=true;persist()}}
+function toggleBought(id,v){let x=current.ingredients.find(x=>x.id===id);if(x){x.bought=v;persist()}}
+function loadWeek(id){let w=store.weeks.find(w=>String(w.id)===String(id));if(w){if(!confirm('Open this saved week? Save the current week first if you want to keep its latest changes.'))return;current=JSON.parse(JSON.stringify(w));store.weeks=store.weeks.filter(x=>String(x.id)!==String(id));persist();show('dashboard')}}
+function deleteWeek(id){if(confirm('Delete this saved week permanently?')){store.weeks=store.weeks.filter(w=>String(w.id)!==String(id));localStorage.setItem(KEY,JSON.stringify(store));render()}}
+function show(id){document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id===id));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===id))}
+document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>show(b.dataset.tab)));
+document.getElementById('ingredientUnit').addEventListener('change',e=>{document.getElementById('ingredientOtherWrap').hidden=e.target.value!=='other';});
+document.getElementById('saveWeek').onclick=()=>{current.name=document.getElementById('weekName').value.trim();current.date=document.getElementById('weekDate').value;current.budget=Math.max(0,Number(document.getElementById('budget').value)||0);persist();alert('Week details saved!')};
+document.getElementById('addDish').onclick=()=>{let n=document.getElementById('dishName').value.trim();if(!n)return alert('Enter a dish name.');current.dishes.push({id:String(Date.now()+Math.random()),name:n,person:document.getElementById('dishPerson').value.trim()});document.getElementById('dishName').value='';document.getElementById('dishPerson').value='';persist()};
+document.getElementById('addIngredient').onclick=()=>{let dish=document.getElementById('ingredientDish').value,n=document.getElementById('ingredientName').value.trim();if(!dish)return alert('Add a dish first.');if(!n)return alert('Enter an ingredient name.');let a=document.getElementById('ingredientActual').value;const unit=document.getElementById('ingredientUnit').value;const amount=document.getElementById('ingredientQty').value;const other=document.getElementById('ingredientOtherUnit').value.trim();if(amount!==''&&(!Number.isFinite(Number(amount))||Number(amount)<0))return alert('Enter a valid quantity.');if(unit==='other'&&!other)return alert('Enter the other unit, such as pcs or pack.');current.ingredients.push({id:String(Date.now()+Math.random()),dish,name:n,qty:'',qtyAmount:amount,qtyUnit:unit,qtyOther:unit==='other'?other:'',actual:a===''?'':Math.max(0,Number(a)||0),note:document.getElementById('ingredientNote').value.trim(),bought:a!==''});['ingredientName','ingredientQty','ingredientActual','ingredientNote','ingredientOtherUnit'].forEach(id=>document.getElementById(id).value='');document.getElementById('ingredientUnit').value='kg';document.getElementById('ingredientOtherWrap').hidden=true;persist()};
+document.getElementById('addSupply').onclick=()=>{let n=document.getElementById('supplyName').value.trim();if(!n)return alert('Enter a supply name.');let a=document.getElementById('supplyActual').value;(current.supplies||(current.supplies=[])).push({id:String(Date.now()+Math.random()),name:n,qty:document.getElementById('supplyQty').value.trim(),actual:a===''?'':Math.max(0,Number(a)||0),note:document.getElementById('supplyNote').value.trim(),bought:a!==''});['supplyName','supplyQty','supplyActual','supplyNote'].forEach(id=>document.getElementById(id).value='');persist()};
+document.getElementById('newWeek').onclick=()=>{if(!confirm('Save this week to history and start a fresh week?'))return;store.weeks.push(JSON.parse(JSON.stringify(current)));current=fresh();persist();show('dashboard')};
+let backupDirectoryHandle=null;
+const backupFileName='food-budget-all-weeks-backup.json';
+function backupBlob(){return new Blob([JSON.stringify({format:'Food Budget Planner backup',version:2,exportedAt:new Date().toISOString(),weeks:store.weeks,current},null,2)],{type:'application/json'});}
+async function saveAllWeeks(){
+ const file= new File([backupBlob()],backupFileName,{type:'application/json'});
+ if(backupDirectoryHandle){
+  try{let permission=await backupDirectoryHandle.queryPermission({mode:'readwrite'});if(permission!=='granted')permission=await backupDirectoryHandle.requestPermission({mode:'readwrite'});if(permission==='granted'){const handle=await backupDirectoryHandle.getFileHandle(backupFileName,{create:true});const writable=await handle.createWritable();await writable.write(file);await writable.close();alert('All weeks were saved to your selected folder.');return;}}
+  catch(err){console.warn('Folder save unavailable:',err);}
+ }
+ if(navigator.share && (!navigator.canShare || navigator.canShare({files:[file]}))){
+  try{await navigator.share({files:[file],title:'Food Budget Planner backup',text:'Backup of your current week and all saved weeks.'});return;}catch(err){if(err.name==='AbortError')return;}
+ }
+ const url=URL.createObjectURL(file),a=document.createElement('a');a.href=url;a.download=backupFileName;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);alert('Backup exported. If it went to Downloads, move it to your preferred folder using your Files app.');
+}
+document.getElementById('saveAllWeeks').onclick=saveAllWeeks;
+document.getElementById('chooseFolder').onclick=async()=>{
+ if(!window.showDirectoryPicker){alert('Folder selection is not supported in this browser. On Android, tap Save all weeks and choose your Files app or another save destination from the share screen.');return;}
+ try{backupDirectoryHandle=await window.showDirectoryPicker({id:'food-budget-backups',mode:'readwrite'});alert('Backup folder selected. Tap Save all weeks whenever you want to save an updated backup there.');}catch(err){if(err.name!=='AbortError')alert('Could not select that folder. Please try again.');}
+};
+
+function buildReport(){
+ const t=totals(), date=current.date||'Not specified', title=current.name||'Weekly Food Project';
+ const lines=[];
+ lines.push('WEEKLY FOOD PROJECT — FINISHED BUDGET REPORT');
+ lines.push('============================================');
+ lines.push('Project / Week: '+title);lines.push('Date: '+date);lines.push('Total Available Budget: '+money(current.budget));
+ lines.push('');lines.push('1. FOOD MENU');
+ if(current.dishes.length)current.dishes.forEach((d,i)=>lines.push((i+1)+'. '+d.name+(d.person?' — Person responsible: '+d.person:'')));else lines.push('No dishes recorded.');
+ lines.push('');lines.push('2. FOOD INGREDIENTS AND COSTS');
+ if(current.dishes.length){current.dishes.forEach((d,i)=>{lines.push('');lines.push((i+1)+'. '+d.name);const items=current.ingredients.filter(x=>x.dish===d.id);if(!items.length){lines.push('   No ingredients recorded.');return;}items.forEach(x=>{const q=formatQty(x);const qty=q?' ('+q+')':'';lines.push('   - '+x.name+qty+' | Price paid: '+(x.actual!==''&&x.actual!==null&&x.actual!==undefined?money(x.actual):'Not yet recorded'));});lines.push('   Food ingredient spending recorded: '+money(items.reduce((a,x)=>a+Number(x.actual||0),0)));});}else lines.push('No ingredients recorded.');
+ lines.push('');lines.push('3. NON-FOOD SUPPLIES AND COSTS');
+ if((current.supplies||[]).length){current.supplies.forEach(x=>{const q=formatQty(x);const qty=q?' ('+q+')':'';lines.push('   - '+x.name+qty+' | Price paid: '+(x.actual!==''&&x.actual!==null&&x.actual!==undefined?money(x.actual):'Not yet recorded')+' | '+(x.bought?'Purchased':'Not marked purchased'));});}else lines.push('No non-food supplies recorded.');
+ lines.push('');lines.push('4. BUDGET SUMMARY');lines.push('Food ingredients: '+money(t.food));lines.push('Non-food supplies: '+money(t.nonFood));lines.push('Total actual amount recorded: '+money(t.actual));lines.push('Remaining budget (based on actual amounts entered): '+money(t.remain));
+ const all=[...current.ingredients,...(current.supplies||[])];const bought=all.filter(x=>x.bought).length;
+ lines.push('');lines.push('5. SHOPPING CHECKLIST');lines.push('Items marked as purchased: '+bought+' of '+all.length);
+ lines.push('');lines.push('6. NOTES');lines.push('________________________________________________');lines.push('________________________________________________');lines.push('');lines.push('Prepared by: ______________________________');lines.push('Date submitted: ___________________________');lines.push('');lines.push('Note: Total spending includes only actual prices entered for food ingredients and non-food supplies. Please enter all purchased item prices before submitting this report.');
+ return lines.join('\n');
+}
+document.getElementById('generateReport').onclick=()=>{document.getElementById('reportText').value=buildReport();document.getElementById('copyStatus').textContent='Report generated. Review it before copying.'};
+document.getElementById('copyReport').onclick=async()=>{
+ const box=document.getElementById('reportText');
+ if(!box.value.trim())box.value=buildReport();
+ try{await navigator.clipboard.writeText(box.value);document.getElementById('copyStatus').textContent='Report copied! Paste it into your document or message.'}
+ catch(e){box.focus();box.select();document.getElementById('copyStatus').textContent='Text selected. Press Copy from your device menu, or use Select all text.'}
+};
+document.getElementById('selectReport').onclick=()=>{const box=document.getElementById('reportText');if(!box.value.trim())box.value=buildReport();box.focus();box.select();document.getElementById('copyStatus').textContent='All report text selected. Choose Copy from your device menu.'};
+
+document.getElementById('importBtn').onclick=()=>document.getElementById('importFile').click();
+document.getElementById('importFile').onchange=async e=>{let f=e.target.files[0];if(!f)return;try{let d=JSON.parse(await f.text());if(!d.current||!Array.isArray(d.weeks))throw Error();if(!confirm('Import backup and replace the current app data?'))return;store=d;store.weeks=(store.weeks||[]).map(removeOldEstimates);current=removeOldEstimates(store.current);store.current=current;localStorage.setItem(KEY,JSON.stringify(store));render();alert('Backup imported.')}catch(err){alert('That backup file is not valid.')}e.target.value=''};
+render();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js').catch(err => {
+      console.log('Offline setup could not be registered:', err);
+    });
+  });
+}
+</script>
+
+</body></html>
