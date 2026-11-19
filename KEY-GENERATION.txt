@@ -1,0 +1,21 @@
+KEY GENERATION (run on a trusted computer with OpenSSL 3.x)
+
+Generate an Ed25519 private key in PKCS#8 DER and a public key in SPKI DER:
+
+openssl genpkey -algorithm ED25519 -out license-private.pem
+openssl pkey -in license-private.pem -outform DER | base64 -w 0 > private-key-pkcs8.b64
+openssl pkey -in license-private.pem -pubout -outform DER | base64 -w 0 > public-key-spki.b64
+
+Set the Worker private key secret using the CONTENT of private-key-pkcs8.b64:
+wrangler secret put LICENSE_PRIVATE_KEY
+
+Set a long random admin token:
+wrangler secret put ADMIN_TOKEN
+
+Paste the CONTENT of public-key-spki.b64 into FBP_LICENSE_CONFIG.PUBLIC_KEY in index.html.
+
+SECURITY:
+- Never upload license-private.pem or private-key-pkcs8.b64 to GitHub.
+- Keep a secure offline backup of the private key.
+- If the private key is lost, existing licenses remain verifiable, but you cannot issue new signed licenses with that key.
+- If compromised, create a new key and plan a controlled license migration.

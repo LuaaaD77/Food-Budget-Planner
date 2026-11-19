@@ -1,0 +1,8 @@
+name = "food-budget-planner-licensing"
+main = "worker.js"
+compatibility_date = "2026-11-12"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "food-budget-planner-licenses"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
